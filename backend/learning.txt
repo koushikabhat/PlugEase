@@ -1,0 +1,23 @@
+
+module.exports = connectDb; is a commonJs and export default = connectDb; is es6 module system
+
+when i just export function name but while require it already checks the imports
+
+while connecting the db or interacting with db always use async and try catch
+
+
+
+//when you exports it requires function, object, array etc not a file name 
+
+so module.export = router is done
+
+
+here i am getting something problem then when i give wrong otp instead of showing 
+invalid otp it was showing something went wrong 
+
+because  i have used axios and which caths the erro >400 so i have used status(4oo) so
+it was directly targeting catch block 
+so what i need to do is 
+ case 1 change status code to 200 and sucess false 
+ case 2 go to catch block err 
+         open err.response.data.message it shows the invalid message
