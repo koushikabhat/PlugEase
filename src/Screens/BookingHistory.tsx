@@ -5,8 +5,8 @@ function BookingHistory(){
     return(
         <SafeAreaView >
             <View>
-                <Text>Profile Screen</Text>
-                <Text>Welcome to your profile!</Text>
+                <Text>Booking History</Text>
+                <Text>Bookig History</Text>
             </View>
         </SafeAreaView>
     );

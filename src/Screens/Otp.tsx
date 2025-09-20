@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import {BACKEND_URI} from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   SafeAreaView,
   View,
@@ -48,15 +49,23 @@ function Otp({ route }) {
     })
   }
 
-  const handleVarifyOtp = () => {
+  const handleVarifyOtp = async() => {
+    console.log("inside verify otp function");
     if (otp.length === 4) {
       axios.post(`http://${BACKEND_URI}/api/auth/verify-otp`, { phone: phoneNumber, otp: otp })
-        .then((res) => {
+        .then(async (res) => {
+          if(res.data.success) 
+          {
 
-          if(res.data.success) {
-            navigation.navigate("Home");
+            const token = res.data.token; 
+            await AsyncStorage.setItem("userToken", token);
+            await AsyncStorage.setItem("hasOnboarded", "true"); 
+            navigation.navigate("MainApp");
             Alert.alert(res.data.message);
-          } else {
+
+          } 
+          else 
+          {
             Alert.alert(res.data.message);
           }
         })

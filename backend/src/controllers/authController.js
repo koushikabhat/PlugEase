@@ -9,7 +9,7 @@ const User = require("../models/User.models");
 const sendOtp  = async (req,res) =>{
 
     try{
-        //phonenumber will be in req 
+        console.log("Inside the send otp function");    
         const {phone} = req.body;
         console.log(phone);
 

@@ -27,7 +27,7 @@ function Login() {
 
     // console.log("Login button pressed with phone number:", phoneNumber);
     // // Validate phone number (basic validation for 10-digit number) 
-    
+    console.log(" inside handlelogin ", phoneNumber);
     if(phoneNumber.length !== 10){
       alert("Please enter a valid 10-digit phone number.");
       return;
