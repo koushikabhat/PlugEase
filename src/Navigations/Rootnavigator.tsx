@@ -1,32 +1,45 @@
-import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
+
+import React, { useContext, useEffect, useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-
-import Splash from "../Screens/Splash";
+import { NavigationContainer } from "@react-navigation/native";
 import OnBoard from "../Screens/OnBoard";
-import Login from "../Screens/Login";
-import Otp from "../Screens/Otp";
+import AuthNavigator from "./AuthNavigator";
+import AppNavigator from "./AppNavigator";
+import Splash from "../Screens/Splash";
+import { AuthContext } from "../Context/AuthContext";
 
-import TabScreen from "./TabScreen";
-import SearchScreen from "../Screens/SearchScreen";
-// import { BottomTabs } from "react-native-screens";
-
-function Rootnavigator() {
+export default function RootNavigator() {
   const Stack = createNativeStackNavigator();
+  const { isLoading, isLoggedIn, hasOnboarded } = useContext(AuthContext);
+
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Splash timer: always show splash on app start
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 2000); // 2 seconds splash
+    return () => clearTimeout(timer);
+  }, []);
+
+  // If AuthContext is still loading OR splash timer is active, render Splash
+  if (isLoading || showSplash) {
+    return <Splash />;
+  }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{headerShown : false}}>
-        <Stack.Screen name="Splash" component={Splash} />
-        <Stack.Screen name="OnBoard" component={OnBoard} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Otp" component={Otp} />
-        
-        <Stack.Screen name="MainApp" component={TabScreen} />
-        <Stack.Screen name="SearchScreen" component={SearchScreen} />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!hasOnboarded ? (
+          <Stack.Screen name="OnBoard" component={OnBoard} />
+        ) : !isLoggedIn ? (
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+        ) : (
+          <Stack.Screen name="App" component={AppNavigator} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
 
-export default Rootnavigator;
+
+
+  

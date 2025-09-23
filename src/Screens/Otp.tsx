@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import {BACKEND_URI} from '@env';
@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   Alert
 } from "react-native";
+import { AuthContext } from "../Context/AuthContext";
 
 function Otp({ route }) {
 
@@ -49,6 +50,9 @@ function Otp({ route }) {
     })
   }
 
+  const {setIsLoggedIn} = useContext(AuthContext);
+
+
   const handleVarifyOtp = async() => {
     console.log("inside verify otp function");
     if (otp.length === 4) {
@@ -60,7 +64,7 @@ function Otp({ route }) {
             const token = res.data.token; 
             await AsyncStorage.setItem("userToken", token);
             await AsyncStorage.setItem("hasOnboarded", "true"); 
-            navigation.navigate("MainApp");
+            setIsLoggedIn(true); // Update context state
             Alert.alert(res.data.message);
 
           } 

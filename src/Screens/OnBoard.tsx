@@ -1,9 +1,15 @@
 
-import React from "react";
+import React, { useContext } from "react";
 import AppIntroSlider from "react-native-app-intro-slider";
 import { SafeAreaView, Text, View, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthContext } from "../Context/AuthContext";
 
-function OnBoard({ navigation }) {
+
+function OnBoard() {
+
+  const {setHasOnboarded} = useContext(AuthContext);
+  const {completeOnboarding } = useContext(AuthContext);
   const { height, width } = Dimensions.get("window"); // get device size
 
   const slides = [
@@ -34,7 +40,9 @@ function OnBoard({ navigation }) {
         <Image source={item.image} style={[styles.image,{ height: height * 0.75, width: width * 0.9 }]} resizeMode="contain" />
         <View>
           {item.isLast && (
-            <TouchableOpacity style={styles.button} onPress={() => navigation.replace("Login")}>
+            <TouchableOpacity style={styles.button} onPress={ async() => {
+              completeOnboarding();
+              setHasOnboarded(true)}}>
               <Text style={styles.buttonText}>Get Started</Text>
             </TouchableOpacity>
           )}
@@ -43,8 +51,9 @@ function OnBoard({ navigation }) {
     );
   };
 
-  const onDone = () => {
-    navigation.replace("Login");
+  const onDone = async() => {
+    completeOnboarding();
+    // navigation.replace("Login");
   };
 
   const renderNextButton = () => (
