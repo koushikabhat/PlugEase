@@ -19,8 +19,14 @@ const protect = async(req, res, next) => {
             token = req.headers.authorization.split(" ")[1];
 
             //decoding the token
-            const decode = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decode.id).select("-__v"); //select everything except version of mongo in database 
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+            if(!decoded)
+            {
+                return res.status(401).json({message : "Not authorized, token failed", success : false});
+            }
+            req.user = await User.findById(decoded.id).select("-__v"); //select everything except version of mongo in database 
+
             if(!req.user)
             {
                 return res.status(401).json({message : "User not found", success : false});
@@ -42,4 +48,4 @@ const protect = async(req, res, next) => {
     }
 };
 
-module.exports = {protect};
+module.exports = protect;

@@ -56,7 +56,7 @@ function Otp({ route }) {
   const handleVarifyOtp = async() => {
     console.log("inside verify otp function");
     if (otp.length === 4) {
-      axios.post(`http://${BACKEND_URI}/api/auth/verify-otp`, { phone: phoneNumber, otp: otp })
+      axios.post(`http://${BACKEND_URI}/api/auth/verify-otp`, { phone: phoneNumber, otp: otp , role : "user"})
         .then(async (res) => {
           if(res.data.success) 
           {

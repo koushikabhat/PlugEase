@@ -39,21 +39,26 @@ const sendOtp  = async (req,res) =>{
     
 }
 
-const verifyOtp = async (req,res) =>{  
+const verifyOtp = async (req,res) =>{
     try{
-        // console.log("Inside the verify otp function");
-        const{ phone, otp} = req.body;
+        console.log(" req body is ", req.body);
+        console.log("Inside the verify otp function");
+        if(!req.body?.otp || !req.body?.phone)
+        {
+            console.log("Request body is missing at verify otp function");
+            return res.status(400).json({message : "Request body is missing", success : false});
+        }
+        const{ phone, role} = req.body;
+        const otp = req.body?.otp.toString();
 
-
+        console.log(otp);
         if(!phone || !otp)
         {
             console.log("Phone or otp is missing at verify otp function");
             return res.status(400).json({message : "Phone or otp is missing", success : false});
         }
 
-        //comparing the otp sent and the otp stored 
-        //also check if user already exists if not create a new user
-
+        
         const otprecord = await otpDb.findOne({phone});
         console.log(otprecord.otp);
         if (!otprecord.otp) 
@@ -61,7 +66,7 @@ const verifyOtp = async (req,res) =>{
             return res.status(400).json({ message: "OTP expired or not found", success: false });
         }
 
-
+        console.log("Comparing the otp");
         const isMatch = await bcrypt.compare(otp.toString(), otprecord.otp);
 
         if(!isMatch)
@@ -71,16 +76,17 @@ const verifyOtp = async (req,res) =>{
         }
         console.log("OTP verified successfully");
 
-        let user = await User.findOne({PhoneNumber : phone});
+        let user = await User.findOne({PhoneNumber : phone, role: role});
 
         if(!user)
         {
-            user = await User.create({PhoneNumber : phone});  
+            user = await User.create({PhoneNumber : phone, role : role});  
         }
         //generate a jwt token
         const token = generateTokens(user._id); //using  _.userId
 
         //deleting the otp from the store once verified
+        console.log("token is", token);
         await otpDb.deleteOne({phone});
 
         console.log("response sent ")
@@ -89,7 +95,7 @@ const verifyOtp = async (req,res) =>{
     }
     catch(error)
     {
-        console.log(" Error Occurred at the verify Otp function at backend");
+        console.log(" Error Occurred at the verify Otp function at backend", error);
         return res.status(500).json({message : "Internal Sever Error at authentication ", success : false});
     }
 };
