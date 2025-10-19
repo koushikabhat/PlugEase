@@ -12,6 +12,7 @@ import HomeIcon from "../Assets/svgIcons/home.svg"
 import ProfileIcon from "../Assets/svgIcons/profile.svg";
 import ThunderIcon from "../Assets/svgIcons/thunder.svg";
 
+
 const Tab = createBottomTabNavigator(); 
 
 //icons
@@ -50,9 +51,7 @@ function TabScreen(){
                 <AnimatedTabIcon focused={focused} IconComponent={ThunderIcon}/>
             )}}/>
 
-            {/* <Tab.Screen name="Profile" component={Profile} options={{tabBarIcon : ({focused}) => (
-                <AnimatedTabIcon focused={focused} IconComponent={ProfileIcon}/>
-            )}}/> */}
+            {/* <Tab.Screen name="SearchStations" component={SearchStations} options={{ tabBarStyle: { display: "none" } }}/> */}
 
             <Tab.Screen name="Profile" component={Profile} options={{tabBarIcon : ({focused}) => (
                 <AnimatedTabIcon focused={focused} IconComponent={ProfileIcon}/>

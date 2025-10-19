@@ -1,11 +1,13 @@
-const express = require('express'); 
+// const express = require('express'); 
 const env = require('dotenv');
 const axios = require('axios');
+
+
 env.config();
 
 const Stations = require('../models/Stations.models'); 
-
-
+const Bookings = require('../models/Booking.models')
+const User = require('../models/User.models')
 
 const AddStations = async(req,res)=>{ 
     const userId = req.user._id; 
@@ -17,7 +19,7 @@ const AddStations = async(req,res)=>{
         {
             return res.status(400).json({message : "Request Body is Null", success: false});
         }
-        const{name, address, location, slots, supportedVehicles, status} = req.body;
+        const{name, address, location, slots, supportedVehicles, status, opensAt, closesAt} = req.body;
         
         if(!name || !address || !location || !slots || !supportedVehicles || !status)
         {
@@ -27,12 +29,12 @@ const AddStations = async(req,res)=>{
         //save to db 
         //save only to db when there is no stations with same user 
 
-        const existingStation = await Stations.findOne({createdBy : userId});
+        // const existingStation = await Stations.findOne({createdBy : userId});
 
-        if(existingStation)
-        {
-            return res.status(200).json({message : "Station already exists for this user ", success: true, data: existingStation});
-        }
+        // if(existingStation)
+        // {
+        //     return res.status(200).json({message : "Station already exists for this user ", success: true, data: existingStation});
+        // }
 
         const newStation = new Stations({
             name,
@@ -44,6 +46,8 @@ const AddStations = async(req,res)=>{
             slots,
             supportedVehicles,
             status,
+            opensAt,
+            closesAt,
             createdBy : userId
         });
 
@@ -67,12 +71,12 @@ const geocodePlace = async(place)=>{
         throw new Error("Place not found");
     }
     const { lat, lng } = response.data.results[0].geometry.location;
-    return {latitude : lat, longitide : lng };   
+    return {latitude : lat, longitude : lng };   
 }
 
 const SearchStations = async(req,res)=>{
     
-    const{ place }= req.body;
+    const{ place, supportedVehicles, slots, status }= req.body;
     if(!place)
     {
         return res.status(400).json({message : "Place Name Required ", success: false});
@@ -82,21 +86,37 @@ const SearchStations = async(req,res)=>{
     {
         const location = await geocodePlace(place);
 
-        const stations = await Stations.find({
-            location: {
-              $near: {
-                $geometry: {
-                  type: "Point",
-                  coordinates: [location.longitide, location.latitude] // Order: [lng, lat]
-                },
-                $maxDistance: 5000 // 5 km
-              }
+
+        const query = {
+            location: 
+            {
+                $near: 
+                {
+                  $geometry: 
+                  {
+                    type: "Point",
+                    coordinates: [location.longitude, location.latitude] // Order: [lng, lat]
+                  },
+                  $maxDistance: 5000 // 5 km
+                }
             }
-        });
+        };
+
+        if(supportedVehicles) query.supportedVehicles = supportedVehicles;
+        if(slots) query.slots = { $gt: 0 };
+        if(status) query.status = status;
+
+        console.log(" the query is ", query);
+
+
+
+        const stations = await Stations.find(query);
         if(!stations.length)
         {
+            console.log("No Stations Found ");
             return res.status(400).json({message : "No Stations Found ", success: false});
         }
+        console.log("Stations Found ", stations);
         return res.status(200).json({message : "Stations Found ", success: true, data: stations});
     }
     catch(error)
@@ -107,9 +127,38 @@ const SearchStations = async(req,res)=>{
 }
 
 const SearchNearBy = async(req,res)=>{
+    console.log("Inside the SearchNearby Controller ");
     try
     {
+        const {latitude, longitude } = req.body;
+        if(!latitude || !longitude)
+        {
+            return res.status(400).json({message : "Latitude and Longitude are required ", success: false});
+        }
+        
+        const query = {
+            location: 
+            {
+                $near: 
+                {
+                  $geometry: 
+                  {
+                    type: "Point",
+                    coordinates: [longitude, latitude] // Order: [lng, lat]
+                  },
+                  $maxDistance: 5000 // 5 km
+                }
+            }
+        };
 
+        const stations = await Stations.find(query);
+        if(!stations.length)
+        {
+            console.log("No Stations Found ");
+            return res.status(400).json({message : "No Stations Found ", success: false});
+        }
+        console.log("Stations Found ", stations);
+        return res.status(200).json({message : "Stations Found ", success: true, data: stations});
     }
     catch(error)
     {
@@ -117,4 +166,103 @@ const SearchNearBy = async(req,res)=>{
     }
 }
 
-module.exports = { AddStations, SearchStations};
+// const convertTime = (userTime) =>{
+//     const[h, m] = userTime.split(":").map(Number);
+//     return h*60+m;
+// }
+
+
+const checkOverlay = (bookedFrom, bookedTo, userFrom, userTo) => {
+    return userFrom < bookedTo && userTo > bookedFrom; // true if intervals overlap
+  };
+  
+  const BookStation = async (req, res) => {
+
+    console.log("inside bookstation ");
+    const { stationId, timeFrom, timeTo } = req.body;
+  
+    try {
+      const userId = req.user._id;
+
+      if (!stationId || timeFrom == null || timeTo == null) {
+        return res.status(400).json({ message: "Select the station and Time", success: false });
+      }
+  
+      const station = await Stations.findById(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found", success: false });
+      }
+  
+      if (station.status !== "active") {
+        return res.status(400).json({ message: "Select an active station", success: false });
+      }
+  
+      // Check within opening hours
+      if (!(timeFrom >= station.opensAt && timeTo <= station.closesAt)) {
+        return res.status(400).json({
+          message: "Book between opening and closing time of station",
+          success: false,
+        });
+      }
+  
+      // Fetch all bookings for this station
+      const booked = await Bookings.find({ stationId });
+      
+ 
+      
+      let assignedSlot = null;
+
+
+      for (let slotNum = 1; slotNum <= station.slots; slotNum++) 
+      {
+        const slotBookings = booked.filter((b) => parseInt(b.slot) === slotNum);
+        if(slotBookings.length === 0 )
+        {
+            assignedSlot = slotNum;
+            break;
+        }
+        const overlapping = slotBookings.some((b) => checkOverlay( b.time.fromTime, b.time.toTime, timeFrom, timeTo));
+        if(!overlapping)
+        {
+            assignedSlot = slotNum;
+            break;
+        }
+      }
+
+    
+  
+      if(!assignedSlot) { 
+        return res.status(400).json({
+          message: "All slots are busy for this time range",
+          success: false,
+        });
+      }
+  
+      // Save booking
+      const booking = new Bookings({
+        slot: String(assignedSlot),
+        time: { fromTime: timeFrom, toTime: timeTo },
+        stationId,
+        bookedBy: userId,
+      });
+
+      
+
+      await booking.save();
+  
+      return res.json({ message: "Booking created", success: true, booking });
+
+
+    } catch (error) {
+      console.log("Error in BookStation:", error);
+      return res.status(500).json({ message: "Error at BookStation", success: false });
+    }
+  };
+  
+
+module.exports = { AddStations, SearchStations, SearchNearBy, BookStation};
+
+
+
+
+

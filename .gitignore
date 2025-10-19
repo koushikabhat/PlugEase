@@ -254,4 +254,18 @@ buck-out/
 .buckversion
 .fakebuckversion
 
+android/gradle.properties
+# React Native
+node_modules/
+android/build/
+ios/build/
+*.log
+
+# Backend node_modules
+backend/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
 # End of https://www.toptal.com/developers/gitignore/api/reactnative

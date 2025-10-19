@@ -76,7 +76,8 @@ const verifyOtp = async (req,res) =>{
         }
         console.log("OTP verified successfully");
 
-        let user = await User.findOne({PhoneNumber : phone, role: role});
+        // let user = await User.findOne({PhoneNumber : phone, role: role});
+        let user = await User.findOne({PhoneNumber :phone });
 
         if(!user)
         {

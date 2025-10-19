@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <application
       android:name=".MainApplication"
@@ -15,7 +18,7 @@
          <!-- ✅ Add this inside application -->
       <meta-data
           android:name="com.google.android.geo.API_KEY"
-          android:value="AIzaSyDfyBPz9pLnHFsmEhZpL9wITEbp_NCnaC0"/>
+          android:value="${MAPS_API_KEY}"/>
 
 
       <activity

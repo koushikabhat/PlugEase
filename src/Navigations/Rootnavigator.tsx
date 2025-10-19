@@ -16,7 +16,7 @@ export default function RootNavigator() {
 
   // Splash timer: always show splash on app start
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 2000); // 2 seconds splash
+    const timer = setTimeout(() => setShowSplash(false), 4000); // 2 seconds splash
     return () => clearTimeout(timer);
   }, []);
 

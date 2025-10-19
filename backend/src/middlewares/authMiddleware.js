@@ -26,6 +26,7 @@ const protect = async(req, res, next) => {
                 return res.status(401).json({message : "Not authorized, token failed", success : false});
             }
             req.user = await User.findById(decoded.id).select("-__v"); //select everything except version of mongo in database 
+            console.log("req user in token is ",req.user);
 
             if(!req.user)
             {
@@ -37,7 +38,7 @@ const protect = async(req, res, next) => {
         }
         catch(error)
         {
-            console.log("Error occurred at the authMiddleware");
+            console.log("Error occurred at the authMiddleware", error);
             return res.status(500).json({message : "Internal Server Error at authMiddleware", success : false});
         }
     }

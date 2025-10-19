@@ -1,8 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import {BACKEND_URI} from '@env';
+import { BACKEND_URI } from '@env';
 
 import {
   SafeAreaView,
@@ -12,46 +12,49 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 
 function Login() {
-  const navigation  = useNavigation();
+  const navigation = useNavigation();
   const lockImage = require("../Assets/login/lock.png");
   const Logintext = require("../Assets/login/text.png");
 
-  const [phoneNumber, setPhoneNumber] = React.useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  const handleLogin = () => {
+    console.log("Inside handleLogin:", phoneNumber);
 
+    // Regex to match exactly 10 digits
+    const phoneRegex = /^[0-9]{10}$/;
 
-  const handleLogin = ()=>{
-
-    // console.log("Login button pressed with phone number:", phoneNumber);
-    // // Validate phone number (basic validation for 10-digit number) 
-    console.log(" inside handlelogin ", phoneNumber);
-    if(phoneNumber.length !== 10){
-      alert("Please enter a valid 10-digit phone number.");
+    if (!phoneRegex.test(phoneNumber)) {
+      Alert.alert("Invalid Number", "Please enter a valid 10-digit phone number.");
       return;
     }
 
-      console.log(" above axios ");
-      axios.post(`http://${BACKEND_URI}/api/auth/send-otp`, {phone :phoneNumber})
-      .then((res) => 
-      {
-        console.log("login successfull", res);
-        if(res.data.success)
-        {
-          navigation.navigate("Otp", {phoneNumber: phoneNumber});
-        }
-        else{
-          alert("Failed to send OTP. Please try again.");
+    setLoading(true); // show loading indicator
+
+    axios
+      .post(`http://${BACKEND_URI}/api/auth/send-otp`, { phone: phoneNumber })
+      .then((res) => {
+        console.log("Login successful", res);
+        setLoading(false); // hide loading
+
+        if (res.data.success) {
+          navigation.navigate("Otp", { phoneNumber: phoneNumber });
+        } else {
+          Alert.alert("Error", "Failed to send OTP. Please try again.");
         }
       })
-      .catch((err) =>
-      {
-        console.log("login failed at the handlelogin fetch", err);
+      .catch((err) => {
+        console.log("Login failed at handleLogin fetch", err);
+        setLoading(false); // hide loading on error
+        Alert.alert("Error", "Something went wrong. Please try again.");
       });
-  }
-
+  };
 
   return (
     <SafeAreaView style={styles.bgwhite}>
@@ -61,12 +64,15 @@ function Login() {
           source={lockImage}
           resizeMode="contain"
         />
-        <Image source={Logintext} style={styles.textLockImage} resizeMode="contain"></Image>
+        <Image
+          source={Logintext}
+          style={styles.textLockImage}
+          resizeMode="contain"
+        />
         <Text style={styles.textBelowLock}>Login With Your Phone Number</Text>
 
         <Text style={styles.text2}>
-          This number will be used for business communication and providing
-          Support.
+          This number will be used for business communication and providing Support.
         </Text>
         <TextInput
           style={styles.input}
@@ -75,12 +81,20 @@ function Login() {
           placeholder="Mobile number"
           placeholderTextColor="#999"
           value={phoneNumber}
-          onChangeText={setPhoneNumber} //directly sets the value of phone number
+          onChangeText={setPhoneNumber}
         />
-        {/* Login Button */}
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginText}>Login</Text>
-        </TouchableOpacity>
+
+        {/* Login Button or Loading */}
+        {loading ? (
+          <View style={[styles.loginButton, { flexDirection: "row", justifyContent: "center" }]}>
+            <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
+            <Text style={styles.loginText}>Sending OTP...</Text>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={styles.loginText}>Login</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -96,27 +110,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    // borderColor: "#000",
-    // borderWidth: 2,
     margin: 10,
-    alignItems: "center", // center horizontally
-    justifyContent: "center", // center vertically
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
   },
   lockimage: {
     height: 100,
     width: 120,
-    // marginBottom: 0,
   },
-  textLockImage:{
+  textLockImage: {
     height: 70,
     width: 120,
-    // marginBottom: 1,
   },
   textBelowLock: {
     fontSize: 28,
     fontWeight: "900",
-    fontFamily: "Poppins", // requires poppins installed
+    fontFamily: "Poppins",
     color: "#0C2964",
     textAlign: "center",
     marginBottom: 15,
@@ -154,6 +164,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 26,
     fontWeight: "bold",
-    letterSpacing: 2.5
+    letterSpacing: 2.5,
   },
 });
